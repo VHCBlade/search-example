@@ -5,7 +5,7 @@ class SearchData with EquatableMixin {
   final String title;
   final String? subtitle;
 
-  SearchData(this.url, this.title, this.subtitle);
+  SearchData({required this.url, required this.title, this.subtitle});
 
   @override
   List<Object?> get props => [url, title, subtitle];
