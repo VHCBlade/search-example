@@ -4,6 +4,8 @@ import 'package:search_example/model/search_model.dart';
 import 'package:search_example/screens/github_search/search_bar.dart';
 import 'package:search_example/state/model_provider.dart';
 
+const TITLE_TEXT = "GitHub Search";
+
 class GitHubSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -21,18 +23,29 @@ class _InnerGitHubScreen extends StatefulWidget {
 class _InnerGitHubScreenState extends State<_InnerGitHubScreen> {
   @override
   Widget build(BuildContext context) {
+    final searchModel = context.watch<ModelNotifier<SearchModel>>().model;
+    final title = searchModel.lastSuccessfulSearchTerm == null
+        ? TITLE_TEXT
+        : "$TITLE_TEXT - ${searchModel.lastSuccessfulSearchTerm}";
+
     return Scaffold(
-      appBar: AppBar(title: Text("GitHub Search"), actions: [
+      appBar: AppBar(title: Text(title), actions: [
         IconButton(
           icon: Icon(Icons.search),
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => GitHubSearchBarScreen(
-                    searchModel:
-                        context.read<ModelNotifier<SearchModel>>().model,
-                  ))),
+          // Do not allow searching while already loading a current search.
+          onPressed: searchModel.isLoading
+              ? null
+              : () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => GitHubSearchBarScreen(
+                        searchModel: searchModel,
+                      ))),
         )
       ]),
-      body: Container(),
+      body: searchModel.isLoading
+          ? Center(child: CircularProgressIndicator())
+          :
+          // TODO
+          Container(),
     );
   }
 }

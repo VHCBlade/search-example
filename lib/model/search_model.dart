@@ -4,6 +4,7 @@ import 'package:search_example/state/event_channel.dart';
 import 'package:search_example/state/model.dart';
 
 const SUCCESSFUL_SEARCH_LIMIT = 10;
+const _ERROR_MESSAGE = "Search Term Error";
 
 class SearchModel with Model {
   final ProviderEventChannel eventChannel;
@@ -22,11 +23,16 @@ class SearchModel with Model {
   String get currentSearchTerm => _currentSearchTerm;
   String _currentSearchTerm = '';
 
+  /// Informs us if the [SearchModel] is currently waiting for the results of a
+  /// request.
+  bool get isLoading => _isLoading;
+  bool _isLoading = false;
+
   bool get hasSearched => _lastSuccessfulSearchTerm == null;
 
   SearchModel({ProviderEventChannel? parentChannel})
       : eventChannel = new ProviderEventChannel(parentChannel) {
-    /// Update the current search term to the term in the event.
+    // Update the current search term to the term in the event.
     eventChannel.addEventListener(SEARCH_TERM_EVENT, (val) {
       updateModelOnChange(
           change: () => _currentSearchTerm = val,
@@ -34,12 +40,77 @@ class SearchModel with Model {
       return true;
     });
 
-    /// Create a Search Event.
+    // Start a search
     eventChannel.addEventListener(SEARCH_BUTTON_EVENT, (_) {
-      // TODO
-      eventChannel.fireEvent(ERROR_ALERT_EVENT,
-          AlertData(name: "Searching!", info: _currentSearchTerm));
+      startSearch();
       return true;
     });
+  }
+
+  /// Starts the search using the [currentSearchTerm].
+  Future<void> startSearch() async {
+    // Only make one request at a time.
+    if (isLoading) {
+      eventChannel.fireEvent(
+          ERROR_ALERT_EVENT,
+          AlertData(
+              name: _ERROR_MESSAGE,
+              info: "Only one search request can be made at a time."));
+      return;
+    }
+
+    // Validate first
+    // Quick and brute-force way to prevent SQL Injection and XSS
+    if (_currentSearchTerm.contains('\'') ||
+        _currentSearchTerm.contains('\"') ||
+        _currentSearchTerm.contains('<') ||
+        _currentSearchTerm.contains('>')) {
+      eventChannel.fireEvent(
+          ERROR_ALERT_EVENT,
+          AlertData(
+              name: _ERROR_MESSAGE,
+              info:
+                  "The search term cannot contain the following characters \', \", <, >."));
+      return;
+    }
+
+    // Do not accept empty searches.
+    if (_currentSearchTerm.isEmpty) {
+      eventChannel.fireEvent(
+          ERROR_ALERT_EVENT,
+          AlertData(
+              name: _ERROR_MESSAGE, info: "Please define a search term."));
+      return;
+    }
+
+    _isLoading = true;
+    updateLastSuccessfulSearchTerm(currentSearchTerm);
+    updateModel();
+
+    // TODO
+    await (Future.delayed(Duration(seconds: 10)));
+
+    _isLoading = false;
+    updateModel();
+  }
+
+  /// Updates the data stored in the model to reflect the newest
+  /// [searchTerm] used.
+  void updateLastSuccessfulSearchTerm(String searchTerm) {
+    _lastSuccessfulSearchTerm = searchTerm;
+
+    successfulSearchTerms.remove(searchTerm);
+    successfulSearchTerms.add(searchTerm);
+
+    // Only the first one needs to be removed to hit the limit since searches
+    // can only be added one at a time.
+    if (successfulSearchTerms.length > SUCCESSFUL_SEARCH_LIMIT) {
+      successfulSearchTerms.removeAt(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }
