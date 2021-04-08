@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:search_example/events/event_names.dart';
 import 'package:search_example/model/frontend/alert_model.dart';
 import 'package:search_example/repository/search/search_data.dart';
@@ -16,7 +18,9 @@ class SearchModel with Model {
   /// successful search terms.
   final List<String> successfulSearchTerms = [];
 
-  List<SearchData> get searchResults => _searchResults ?? const [];
+  /// The results of the most recent search. If null, that means that the
+  /// search was unsuccessful.
+  List<SearchData>? get searchResults => _searchResults;
   List<SearchData>? _searchResults;
 
   /// Shows the last Successful Search that returned results. This is also
@@ -95,7 +99,21 @@ class SearchModel with Model {
     _searchResults = null;
     updateModel();
 
-    _searchResults = await searchRepository.search(currentSearchTerm);
+    try {
+      _searchResults = await searchRepository
+          .search(currentSearchTerm)
+          .timeout(Duration(seconds: 20));
+    } on Exception {
+      // If Timed out, signal that timeout occurred.
+      _searchResults = null;
+
+      eventChannel.fireEvent(
+          "Connection Error",
+          AlertData(
+              name: _ERROR_MESSAGE,
+              info:
+                  "Unable to execute search of \"$currentSearchTerm\" due to connection issues."));
+    }
 
     _isLoading = false;
     updateModel();

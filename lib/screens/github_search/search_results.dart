@@ -13,15 +13,22 @@ class SearchResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (searchData == null) {
-      return Container();
-    }
     final theme = Theme.of(context);
 
     if (!hasSearched) {
       return Center(
           child: Text(
         "Start a search using the search button!",
+        textAlign: TextAlign.center,
+        style: theme.textTheme.headline3,
+      ));
+    }
+
+    // No Data means that the search failed.
+    if (searchData == null) {
+      return Center(
+          child: Text(
+        "Search Failed!",
         textAlign: TextAlign.center,
         style: theme.textTheme.headline3,
       ));
