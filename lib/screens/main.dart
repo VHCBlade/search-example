@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:search_example/config.dart';
 import 'package:search_example/events/event_names.dart';
 import 'package:search_example/model/frontend/alert_model.dart';
 import 'package:search_example/model/url_launcher_model.dart';
+import 'package:search_example/repository/search/concrete/github_search_repo.dart';
 import 'package:search_example/repository/search/concrete/test_search_repo.dart';
 import 'package:search_example/repository/search/search_repo.dart';
 import 'package:search_example/repository/url_launcher/concrete/default_url_launcher.dart';
@@ -16,10 +18,15 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
         providers: [
-          Provider<SearchRepository>(create: (_) => TestSearchRepository()),
+          // Instantiate the repositories
+          Provider<SearchRepository>(
+              create: (_) => configType == ConfigTypes.base
+                  ? GitHubSearchRepository()
+                  : TestSearchRepository()),
           Provider<UrlLauncherRepository>(
               create: (_) => DefaultUrlLauncherRepository()),
         ],
+        // Add the Global Models
         child: ModelProvider(
             create: (context, parent) => AlertModel(parentChannel: parent),
             child: ModelProvider(
@@ -46,6 +53,7 @@ class _InnerMainScreenState extends State<_InnerMainScreen> {
   @override
   void initState() {
     super.initState();
+    // Fire a Build Context that is under MaterialApp for the Global Models.
     context.read<ProviderEventChannel>().fireEvent(CONTEXT_EVENT, context);
   }
 
