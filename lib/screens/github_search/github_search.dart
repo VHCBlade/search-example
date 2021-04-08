@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:search_example/model/search_model.dart';
+import 'package:search_example/repository/search/search_repo.dart';
 import 'package:search_example/screens/github_search/search_bar.dart';
+import 'package:search_example/screens/github_search/search_results.dart';
 import 'package:search_example/state/model_provider.dart';
 
 const TITLE_TEXT = "GitHub Search";
@@ -10,7 +12,9 @@ class GitHubSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ModelProvider(
-        create: (_, parent) => SearchModel(parentChannel: parent),
+        create: (_, parent) => SearchModel(
+            parentChannel: parent,
+            searchRepository: context.read<SearchRepository>()),
         child: _InnerGitHubScreen());
   }
 }
@@ -24,6 +28,8 @@ class _InnerGitHubScreenState extends State<_InnerGitHubScreen> {
   @override
   Widget build(BuildContext context) {
     final searchModel = context.watch<ModelNotifier<SearchModel>>().model;
+
+    // Show the search term in the title.
     final title = searchModel.lastSuccessfulSearchTerm == null
         ? TITLE_TEXT
         : "$TITLE_TEXT - ${searchModel.lastSuccessfulSearchTerm}";
@@ -43,9 +49,9 @@ class _InnerGitHubScreenState extends State<_InnerGitHubScreen> {
       ]),
       body: searchModel.isLoading
           ? Center(child: CircularProgressIndicator())
-          :
-          // TODO
-          Container(),
+          : SearchResults(
+              searchData: searchModel.searchResults,
+              hasSearched: searchModel.hasSearched),
     );
   }
 }

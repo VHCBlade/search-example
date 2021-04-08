@@ -5,6 +5,9 @@ import 'package:search_example/model/search_model.dart';
 class GitHubSearchBarScreen extends StatefulWidget {
   final SearchModel searchModel;
 
+  /// Screen that displays the Search bar for the GitHub Search Screen.
+  ///
+  /// [searchModel] is the model inherited from the GitHubSearch Screen.
   const GitHubSearchBarScreen({Key? key, required this.searchModel})
       : super(key: key);
 
@@ -76,6 +79,10 @@ class SuggestedSearchTerms extends StatelessWidget {
   final List<String> searchTerms;
   final Function(String) updateSearch;
 
+  /// Shows a list of Suggested Search Terms that the user can click.
+  ///
+  /// [updateSearch] defines what happens when the search term is clicked.
+  /// [searchTerms] is the list of search terms to be displayed as suggestions.
   const SuggestedSearchTerms(
       {Key? key, required this.searchTerms, required this.updateSearch})
       : super(key: key);
@@ -92,7 +99,7 @@ class SuggestedSearchTerms extends StatelessWidget {
       Text("Recent Searches", style: theme.textTheme.subtitle1)
     ];
 
-    for (int i = searchTerms.length - 1; i > 0; i--) {
+    for (int i = searchTerms.length - 1; i > -1; i--) {
       children.add(TextButton(
           onPressed: () => updateSearch(searchTerms[i]),
           child: Text(

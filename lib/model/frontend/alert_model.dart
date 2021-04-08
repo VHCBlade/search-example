@@ -14,7 +14,7 @@ class AlertModel with Model {
   final ProviderEventChannel eventChannel;
   BuildContext? buildContext;
 
-  AlertModel({ProviderEventChannel? parentChannel, required this.buildContext})
+  AlertModel({ProviderEventChannel? parentChannel})
       : eventChannel = new ProviderEventChannel(parentChannel) {
     eventChannel.addEventListener(ERROR_ALERT_EVENT, (val) {
       final AlertData data = val;

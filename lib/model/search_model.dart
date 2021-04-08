@@ -1,5 +1,7 @@
 import 'package:search_example/events/event_names.dart';
 import 'package:search_example/model/frontend/alert_model.dart';
+import 'package:search_example/repository/search/search_data.dart';
+import 'package:search_example/repository/search/search_repo.dart';
 import 'package:search_example/state/event_channel.dart';
 import 'package:search_example/state/model.dart';
 
@@ -8,10 +10,14 @@ const _ERROR_MESSAGE = "Search Term Error";
 
 class SearchModel with Model {
   final ProviderEventChannel eventChannel;
+  final SearchRepository searchRepository;
 
   /// Shows a list of the last [SUCCESSFUL_SEARCH_LIMIT] number of
   /// successful search terms.
   final List<String> successfulSearchTerms = [];
+
+  List<SearchData> get searchResults => _searchResults ?? const [];
+  List<SearchData>? _searchResults;
 
   /// Shows the last Successful Search that returned results. This is also
   /// the search term used to get the results of
@@ -28,9 +34,10 @@ class SearchModel with Model {
   bool get isLoading => _isLoading;
   bool _isLoading = false;
 
-  bool get hasSearched => _lastSuccessfulSearchTerm == null;
+  bool get hasSearched => _lastSuccessfulSearchTerm != null;
 
-  SearchModel({ProviderEventChannel? parentChannel})
+  SearchModel(
+      {required this.searchRepository, ProviderEventChannel? parentChannel})
       : eventChannel = new ProviderEventChannel(parentChannel) {
     // Update the current search term to the term in the event.
     eventChannel.addEventListener(SEARCH_TERM_EVENT, (val) {
@@ -85,10 +92,10 @@ class SearchModel with Model {
 
     _isLoading = true;
     updateLastSuccessfulSearchTerm(currentSearchTerm);
+    _searchResults = null;
     updateModel();
 
-    // TODO
-    await (Future.delayed(Duration(seconds: 10)));
+    _searchResults = await searchRepository.search(currentSearchTerm);
 
     _isLoading = false;
     updateModel();
